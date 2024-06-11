@@ -1,5 +1,6 @@
 package gabriela.michelle.ticketsgaby
 
+import RecyclerView.Adaptador
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -7,10 +8,14 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import modelo.ClaseConexion
+import modelo.tbTickets
 import java.util.UUID
 
 class MainActivity : AppCompatActivity() {
@@ -35,6 +40,47 @@ class MainActivity : AppCompatActivity() {
         val txtFechaF = findViewById<EditText>(R.id.txtFFinal)
         val btnAgregar = findViewById<Button>(R.id.btnAgregar)
 
+        val rcvTickets = findViewById<RecyclerView>(R.id.rcvTickets)
+
+        //Asignarle un layout al RecicleView
+        rcvTickets.layoutManager = LinearLayoutManager(this)
+//Funcion para mostar Datos
+
+        fun obtenerDatos():List<tbTickets>{
+            //creo un objeto d la clase conexion
+            val objConexion = ClaseConexion().cadenaConexio()
+
+            //creo uun statement
+            val statement = objConexion?.createStatement()
+            val resulSet = statement?.executeQuery("select * from tickett")!!
+            val tickets = mutableListOf<tbTickets>()
+
+            while (resulSet.next()){
+                val UUIDticket= resulSet.getString("UUIDticket")
+                val numTicket= resulSet.getString("numTicket")
+                val titulo= resulSet.getString("titulo")
+                val descripcion= resulSet.getString("descripcion")
+                val autor= resulSet.getString("autor")
+                val email= resulSet.getString("email")
+                val estado= resulSet.getString("estado")
+                val fechaCreacion= resulSet.getString("fechaCreacion")
+                val fechaFinalizacion= resulSet.getString("fechaFinalizacion")
+
+                val ticket = tbTickets(UUIDticket,numTicket,titulo,descripcion,autor,email, estado, fechaCreacion, fechaFinalizacion)
+
+                tickets.add(ticket)
+            }
+            return tickets
+        }
+
+        CoroutineScope(Dispatchers.IO).launch {
+            val ticketsDB = obtenerDatos()
+            withContext(Dispatchers.Main){
+                val adapter = Adaptador(ticketsDB)
+                rcvTickets.adapter = adapter
+            }
+        }
+
 
         btnAgregar.setOnClickListener {
             CoroutineScope(Dispatchers.IO).launch {
@@ -52,7 +98,14 @@ class MainActivity : AppCompatActivity() {
                 addTicket.setString(8,txtFechaC.text.toString())
                 addTicket.setString(9,txtFechaF.text.toString())
                 addTicket.executeUpdate()
+
+                val nuevaMascota = obtenerDatos()
+                withContext(Dispatchers.Main){
+                    (rcvTickets.adapter as? Adaptador)?.actualizarLista(nuevaMascota)
+                }
             }
+
+
 
 
         }

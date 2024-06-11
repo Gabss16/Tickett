@@ -170,6 +170,7 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rcvTickets"
         android:layout_width="409dp"
         android:layout_height="278dp"
         app:layout_constraintBottom_toBottomOf="parent"
